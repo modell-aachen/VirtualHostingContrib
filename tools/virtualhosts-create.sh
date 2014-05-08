@@ -84,7 +84,7 @@ create_virtual_host_from_scratch(){
 
 copy_virtualhost_template() {
   echo "Copying virtualhost template ..."
-  cp -r "$VIRTUAL_HOSTS_DIR/_template" "$VIRTUAL_HOSTS_DIR/$vhost"
+  cp -r "$VIRTUAL_HOSTS_DIR/$VHTEMPLATE" "$VIRTUAL_HOSTS_DIR/$vhost"
 }
 
 maybe_create_configuration_file() {
@@ -99,7 +99,9 @@ highlight() {
   echo -e "\033[33;01m$1\033[m"
 }
 
-if [ -e "$VIRTUAL_HOSTS_DIR/_template" ]; then
+test -z $VHTEMPLATE && VHTEMPLATE=_template
+
+if [ -e "$VIRTUAL_HOSTS_DIR/$VHTEMPLATE" ]; then
   copy_virtualhost_template
 else
   create_virtual_host_from_scratch
