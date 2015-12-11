@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wT
+#!/usr/bin/perl
 # Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2008 Gilmar Santos Jr, jgasjr@gmail.com and Foswiki
@@ -45,9 +45,6 @@ $Error::Debug = 1;
 
 our ($script) = $0         =~ /^(.*)$/;
 our ($dir)    = Cwd::cwd() =~ /^(.*)$/;
-
-eval { eval substr( $0, 0, 0 ) };
-Foswiki::Engine::FastCGI::reExec() unless $@ =~ /^Insecure dependency in eval/;
 
 my @argv = @ARGV;
 
