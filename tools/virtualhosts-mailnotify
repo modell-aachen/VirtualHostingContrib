@@ -30,24 +30,42 @@ use File::Basename;
 BEGIN {
     require 'setlib.cfg';
 }
-
-my $verbose = 1;
 my @webs = ();
 my @exwebs = ();
-my $nonews = 0;
-my $nochanges = 0;
+my $hostname = 'all';
+
+my %options = (
+    verbose => 1,
+    news    => 1,
+    changes => 1,
+    reset   => 1,
+    mail    => 1
+);
 
 # Called from the command line
-foreach my $arg ( @ARGV ) {
-    if( $arg eq "-q" ) {
-        $verbose = 0;
-    } elsif ( $arg eq "-nonews" ) {
-        $nonews = 1;
-    } elsif ( $arg eq "-nochanges" ) {
-        $nochanges = 1;
-    } elsif ( $arg =~ m/^-(.*)/ ) {
+foreach my $arg (@ARGV) {
+    if ( $arg eq "-q" ) {
+        $options{verbose} = 0;
+    }
+    elsif ( $arg eq "-nonews" ) {
+        $options{news} = 0;
+    }
+    elsif ( $arg eq "-nochanges" ) {
+        $options{changes} = 0;
+    }
+    elsif ( $arg eq "-noreset" ) {
+        $options{reset} = 0;
+    }
+    elsif ( $arg eq '-nomail' ) {
+        $options{mail} = 0;
+    }
+    elsif ( $arg =~ m/^-(.*)/ ) {
         push( @exwebs, $1 );
-    } else {
+    }
+    elsif ( $arg =~ m/^host=(.*)/ ) {
+        $hostname = $1;
+    }
+    else {
         push( @webs, $arg );
     }
 }
@@ -56,18 +74,15 @@ use Foswiki();
 use Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
 use Foswiki::Contrib::MailerContrib ();
 
-Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on_each(
-    sub {
-        printf("=> Processing %s\n", $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT) if $verbose;
-        new Foswiki();
-        if ($Foswiki::Contrib::MailerContrib::RELEASE eq '4 Dec 2009') {
-            # Foswiki 1.0.x
-            Foswiki::Contrib::MailerContrib::mailNotify(
-                \@webs, undef, $verbose, \@exwebs, $nonews, $nochanges );
-        } else {
-            # Foswiki 1.1.x+
-            Foswiki::Contrib::MailerContrib::mailNotify(
-                \@webs, $verbose, \@exwebs, $nonews, $nochanges );
-        }
-    }
-);
+if ($hostname) {
+    Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($hostname, \&doit);
+} else {
+    Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on_each(\&doit);
+}
+
+sub doit {
+    printf("=> Processing %s\n", $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT) if $options{verbose};
+    new Foswiki();
+    Foswiki::Contrib::MailerContrib::mailNotify(
+        \@webs, \@exwebs, %options );
+}
