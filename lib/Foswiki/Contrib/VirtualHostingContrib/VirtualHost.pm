@@ -152,7 +152,7 @@ sub _template_path {
   my $template_dir = $self->{directory} . '/templates';
   my @path = ();
   for my $component (split(/\s*,\s*/, $Foswiki::cfg{TemplatePath})) {
-    if ($component =~ m/^\$Foswiki::cfg{TemplateDir}\/(.*)/ ||
+    if ($component =~ m/^\$Foswiki::cfg\{TemplateDir\}\/(.*)/ ||
       $component =~ m/^$Foswiki::cfg{TemplateDir}\/(.*)/) {
       my $relative_path = $1;
       # search in the virtual host templates directory
