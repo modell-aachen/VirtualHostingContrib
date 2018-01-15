@@ -1,9 +1,10 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
 # Copyright (C) 2004 Wind River Systems Inc.
 # Copyright (C) 2004-2007 Peter Thoeny, peter@thoeny.org
+# Copyright (C) 2008-2017 Foswiki Contributors
 # and TWiki Contributors.
 #
 # For licensing info read LICENSE file in the Foswiki root.
@@ -25,47 +26,41 @@
 # perl -I /usr/local/foswiki/bin /usr/local/foswiki/tools/mailnotify
 
 use strict;
+use warnings;
 use File::Basename;
 
 BEGIN {
+    if (-e './setlib.cfg') {
+      unshift @INC, '.';
+    } elsif (-e '../bin/setlib.cfg') {
+      unshift @INC, '../bin';
+    }
     require 'setlib.cfg';
 }
+
+my $verbose = 1;
 my @webs = ();
 my @exwebs = ();
-my $hostname = 'all';
-
-my %options = (
-    verbose => 1,
-    news    => 1,
-    changes => 1,
-    reset   => 1,
-    mail    => 1
-);
+my $nonews = 0;
+my $nochanges = 0;
+my $noreset = 0;
+my $nomail = 0;
 
 # Called from the command line
-foreach my $arg (@ARGV) {
-    if ( $arg eq "-q" ) {
-        $options{verbose} = 0;
-    }
-    elsif ( $arg eq "-nonews" ) {
-        $options{news} = 0;
-    }
-    elsif ( $arg eq "-nochanges" ) {
-        $options{changes} = 0;
-    }
-    elsif ( $arg eq "-noreset" ) {
-        $options{reset} = 0;
-    }
-    elsif ( $arg eq '-nomail' ) {
-        $options{mail} = 0;
-    }
-    elsif ( $arg =~ m/^-(.*)/ ) {
+foreach my $arg ( @ARGV ) {
+    if( $arg eq "-q" ) {
+        $verbose = 0;
+    } elsif ( $arg eq "-nonews" ) {
+        $nonews = 1;
+    } elsif ( $arg eq "-nochanges" ) {
+        $nochanges = 1;
+    } elsif ( $arg eq "-noreset" ) {
+        $noreset = 1;
+    } elsif ( $arg eq '-nomail' ) {
+        $nomail = 1;
+    } elsif ( $arg =~ m/^-(.*)/ ) {
         push( @exwebs, $1 );
-    }
-    elsif ( $arg =~ m/^host=(.*)/ ) {
-        $hostname = $1;
-    }
-    else {
+    } else {
         push( @webs, $arg );
     }
 }
@@ -74,15 +69,27 @@ use Foswiki();
 use Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
 use Foswiki::Contrib::MailerContrib ();
 
-if ($hostname) {
-    Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($hostname, \&doit);
-} else {
-    Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on_each(\&doit);
-}
-
-sub doit {
-    printf("=> Processing %s\n", $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT) if $options{verbose};
-    new Foswiki();
-    Foswiki::Contrib::MailerContrib::mailNotify(
-        \@webs, \@exwebs, %options );
-}
+Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on_each(
+    sub {
+        printf("=> Processing %s\n", $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT) if $verbose;
+        new Foswiki();
+        if ($Foswiki::Contrib::MailerContrib::RELEASE eq '4 Dec 2009') {
+            # Foswiki 1.0.x
+            Foswiki::Contrib::MailerContrib::mailNotify(
+                \@webs, undef, $verbose, \@exwebs, $nonews, $nochanges );
+        } elsif ($Foswiki::Contrib::MailerContrib::VERSION >= 2.8 ) {
+            # Foswiki 1.2.x+
+            Foswiki::Contrib::MailerContrib::mailNotify( \@webs, \@exwebs, 
+              verbose => $verbose,
+              news    => !$nonews,
+              changes => !$nochanges,
+              reset   => !$noreset,
+              mail    => !$nomail
+            );
+        } else {
+            # Foswiki 1.1.x+
+            Foswiki::Contrib::MailerContrib::mailNotify(
+                \@webs, $verbose, \@exwebs, $nonews, $nochanges );
+        }
+    }
+);

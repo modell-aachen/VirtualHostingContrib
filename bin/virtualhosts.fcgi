@@ -1,7 +1,7 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# Copyright (C) 2008 Gilmar Santos Jr, jgasjr@gmail.com and Foswiki
+# Copyright (C) 2008-2017 Gilmar Santos Jr, jgasjr@gmail.com and Foswiki
 # contributors. Foswiki contributors are listed in the AUTHORS file in the root
 # of Foswiki distribution.
 #
@@ -39,9 +39,6 @@ use Foswiki;
 use Foswiki::UI;
 use Foswiki::Contrib::VirtualHostingContrib;
 use Cwd;
-
-use Error;
-$Error::Debug = 1;
 
 our ($script) = $0         =~ /^(.*)$/;
 our ($dir)    = Cwd::cwd() =~ /^(.*)$/;
@@ -90,7 +87,7 @@ __END__
 
 =head1 SYNOPSIS
 
-foswiki.fcgi [options]
+virtualhosts.fcgi [options]
 
   Options:
     -l --listen     Socket to listen on
