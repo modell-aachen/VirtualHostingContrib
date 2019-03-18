@@ -52,6 +52,7 @@ sub find {
         WorkAreaDir         => "$WorkingDir/work_areas",
       },
       TempfileDir           => "$WorkingDir/tmp",
+      VHCEnabled            => 1,
     }
   };
 
