@@ -27,6 +27,7 @@ use strict;
 use warnings;
 
 BEGIN {
+    chdir "$ENV{FOSWIKI_ROOT}/bin" if $ENV{FOSWIKI_ROOT};
     $Foswiki::cfg{Engine} = 'Foswiki::Engine::FastCGI';
     @INC = ( '.', grep { $_ ne '.' } @INC );
     delete $ENV{FOSWIKI_ACTION} if exists $ENV{FOSWIKI_ACTION};
@@ -45,7 +46,7 @@ our ($dir)    = Cwd::cwd() =~ /^(.*)$/;
 
 my @argv = @ARGV;
 
-my ( $listen, $nproc, $max, $size, $check, $pidfile, $manager, $detach, $help, $quiet );
+my ( $listen, $nproc, $max, $size, $check, $pidfile, $manager, $detach, $help, $quiet, $warming, $die_timeout );
 GetOptions(
     'listen|l=s'  => \$listen,
     'nproc|n=i'   => \$nproc,
@@ -56,7 +57,9 @@ GetOptions(
     'manager|M=s' => \$manager,
     'daemon|d'    => \$detach,
     'help|?'      => \$help,
-    'quiet|q'     => \$quiet,
+    'quiet|q=i'   => \$quiet,
+    'warming|w=i' => \$warming,
+    'dtimeout|t=i' => \$die_timeout,
 );
 
 pod2usage(1) if $help;
@@ -80,6 +83,8 @@ $Foswiki::engine->run(
         max     => $max,
         size    => $size,
         check   => $check,
+        warming => $warming,
+        die_timeout => $die_timeout,
     }
 );
 
@@ -99,12 +104,14 @@ virtualhosts.fcgi [options]
     -s --size       Maximum memory size of a server before being recycled
     -d --daemon     Detach from terminal and keeps running as a daemon
     -q --quiet      Disable notification messages
+    -t --dtimeout   Gracetime for workers to end when shutting down
+    -w --warming    Enable warming of workers, defaults to 1
     -? --help       Display this help and exits
 
   Note:
     FCGI manager class defaults to Foswiki::Engine::FastCGI::ProcManager, a
-    wrapper around FCGI::ProcManager to enable automatic reload of 
-    configurations if changed. If you provide another class, probably you'll 
+    wrapper around FCGI::ProcManager to enable automatic reload of
+    configurations if changed. If you provide another class, probably you'll
     need to restart FastCGI processes manually.
 
 =cut
