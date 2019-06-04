@@ -42,7 +42,9 @@ copy_web() {
   web="$1"
   echo "Copying web $web ..."
   cp -r "$FOSWIKI_DATA_DIR/$web" "$VIRTUAL_HOSTS_DIR/$vhost/data/"
-  cp -r "$FOSWIKI_PUB_DIR/$web" "$VIRTUAL_HOSTS_DIR/$vhost/pub/"
+  if [ -d "$FOSWIKI_PUB_DIR/$web" ]; then
+      cp -r "$FOSWIKI_PUB_DIR/$web" "$VIRTUAL_HOSTS_DIR/$vhost/pub/"
+  fi
 }
 
 symlink_web(){
@@ -59,7 +61,9 @@ create_directories() {
   mkdir -p "$VIRTUAL_HOSTS_DIR/$vhost/working/tmp"
   mkdir -p "$VIRTUAL_HOSTS_DIR/$vhost/working/work_areas"
   mkdir -p "$VIRTUAL_HOSTS_DIR/$vhost/working/registration_approvals"
+  mkdir -p "$VIRTUAL_HOSTS_DIR/$vhost/working/logs"
   echo "Deny from all" > "$VIRTUAL_HOSTS_DIR/$vhost/working/.htaccess"
+  touch "$VIRTUAL_HOSTS_DIR/$vhost/data/.htpasswd"
 
   echo "Creating templates directory ..."
   mkdir -p "$VIRTUAL_HOSTS_DIR/$vhost/templates"
@@ -84,7 +88,7 @@ create_virtual_host_from_scratch(){
 
 copy_virtualhost_template() {
   echo "Copying virtualhost template ..."
-  cp -r "$VIRTUAL_HOSTS_DIR/$VHTEMPLATE" "$VIRTUAL_HOSTS_DIR/$vhost"
+  cp -r "$VIRTUAL_HOSTS_DIR/_template" "$VIRTUAL_HOSTS_DIR/$vhost"
 }
 
 maybe_create_configuration_file() {
@@ -99,9 +103,7 @@ highlight() {
   echo -e "\033[33;01m$1\033[m"
 }
 
-test -z $VHTEMPLATE && VHTEMPLATE=_template
-
-if [ -e "$VIRTUAL_HOSTS_DIR/$VHTEMPLATE" ]; then
+if [ -e "$VIRTUAL_HOSTS_DIR/_template" ]; then
   copy_virtualhost_template
 else
   create_virtual_host_from_scratch
